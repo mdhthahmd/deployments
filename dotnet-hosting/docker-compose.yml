@@ -1,0 +1,18 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: true
+
+services:
+  spa:
+    image: ghcr.io/mdhthahmd/dotnet-hosting:0.0.3
+    container_name: web-spa
+    networks:
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.spa.rule=Host(`app.${DOMAIN}`)"
+      - "traefik.http.routers.spa.entrypoints=websecure"
+      - "traefik.http.routers.spa.tls.certresolver=${CERT_RESOLVER}"
+      - "traefik.http.services.spa.loadbalancer.server.port=80"
