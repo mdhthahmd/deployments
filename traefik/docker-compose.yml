@@ -1,0 +1,61 @@
+version: "3.3"
+
+networks:
+  proxy:
+    external: true
+
+services:
+
+  traefik:
+    image: "traefik:v2.9"
+    container_name: "traefik"
+    restart: "unless-stopped"
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - CF_API_EMAIL=${CF_API_EMAIL}
+      - CF_API_KEY=${CF_API_KEY}
+    command: # https://doc.traefik.io/traefik/reference/static-configuration/cli-ref/
+      - "--api.dashboard=false"
+      - "--log.level=${LOG_LEVEL}"
+      # global
+      - "--global.checknewversion=false"
+      - "--global.sendanonymoususage=false"
+      # provider docker
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # entrypoints and http redirection
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      # cert resolvers
+      - "--certificatesresolvers.staging=true"
+      - "--certificatesresolvers.staging.acme.email=${CF_API_EMAIL}"
+      - "--certificatesresolvers.staging.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.staging.acme.dnschallenge=true"
+      - "--certificatesresolvers.staging.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.staging.acme.storage=/etc/traefik/certs/acme.json"
+      - "--certificatesresolvers.production=true"
+      - "--certificatesresolvers.production.acme.email=${CF_API_EMAIL}"
+      - "--certificatesresolvers.production.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.production.acme.dnschallenge=true"
+      - "--certificatesresolvers.production.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.production.acme.storage=/etc/traefik/certs/acme.json"
+    #labels:
+      #- "traefik.enable=true"
+      #- "traefik.http.middlewares.auth.basicauth.users=${BASIC_AUTH_CREDENTIALS}"
+      #- "traefik.http.routers.api.middlewares=auth"
+      #- "traefik.http.routers.api.rule=Host(`monitor.${DOMAIN}`)"
+      #- "traefik.http.routers.api.service=api@internal"
+      #- "traefik.http.routers.api.tls.certresolver=${CERT_RESOLVER}"
+    networks:
+      - proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "${WORKDIR}/traefik/data:/etc/traefik/certs"
+
