@@ -5,14 +5,14 @@ networks:
     external: true
 
 services:
-  spa:
-    image: ghcr.io/mdhthahmd/dotnet-hosting:0.0.3
-    container_name: web-spa
+  dotnetpsa:
+    image: ghcr.io/mdhthahmd/dotnet-hosting:1.0.0
+    container_name: dotnet-spa
     networks:
       - proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.spa.rule=Host(`app.${DOMAIN}`)"
+      - "traefik.http.routers.spa.rule=Host(`app.${DOMAIN}`) && PathPrefix(`/dotnet-hosting`)"
       - "traefik.http.routers.spa.entrypoints=websecure"
       - "traefik.http.routers.spa.tls.certresolver=${CERT_RESOLVER}"
       - "traefik.http.services.spa.loadbalancer.server.port=80"
